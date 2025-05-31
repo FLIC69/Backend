@@ -1,30 +1,30 @@
-🚀 AI Model Backend with FastAPI
+# 🚀 Backend with FastAPI
 FastAPI
 Python
 AI
 Docker
 
-A high-performance backend service for serving AI/ML models built with FastAPI.
+#### A high-performance backend service for serving AI/ML models built with FastAPI.
 
-🌟 Features
+## 🌟 Features
 ⚡ Lightning-fast model inference
 
-🔐 JWT Authentication
+- 🔐 JWT Authentication
 
-📊 Monitoring endpoints
+- 📊 Monitoring endpoints
 
-🐳 Docker-ready deployment
+- 🐳 Docker-ready deployment
 
-📝 Swagger & ReDoc documentation
+- 📝 Swagger & ReDoc documentation
 
-🧪 Unit & integration tests
+- 🧪 Unit & integration tests
 
-⚙️ Model versioning support
+- ⚙️ Model versioning support
 
-📈 Prometheus metrics
+- 📈 Prometheus metrics
 
-🛠️ Quick Start
-Prerequisites
+## 🛠️ Quick Start
+#### Prerequisites
 Python 3.8+
 
 Poetry (recommended) or pip
