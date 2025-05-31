@@ -1,51 +1,29 @@
 import os
-import psycopg2
+from psycopg2 import pool
+import psycopg2.extras
 
 class DB:
     def __init__(self):
-        self.connection_string = os.getenv("DATABSE_CONN_STRING")
-        self.conn = None
-        self.cur = None
-
-        if self.connection_string is None:
-            raise SystemError("Databse connection string not found")
+        self.connection_string = os.getenv("DATABASE_CONN_STRING")
+        if not self.connection_string:
+            raise SystemError("Database connection string not found")
         
-    def connect(self):
-        if self.conn is None:
-            self.conn = psycopg2.connect(self.connection_string)
+        self.pool = pool.SimpleConnectionPool(
+            minconn=1,
+            maxconn=10,
+            dsn=self.connection_string
+        )
 
-    def close(self):
-        if self.cur:
-            self.cur.close()
+    def execute_query(self, query, params=None, fetch=False):
+        conn = self.pool.getconn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                cur.execute(query, params)
+                if fetch:
+                    return cur.fetchall()
+                conn.commit()
+        finally:
+            self.pool.putconn(conn)
 
-        if self.conn:
-            self.conn.close()
-
-    def select_query(self, query):
-        if self.conn is None:
-            return
-        
-        if self.cur is None:
-            self.cur = self.conn.cursor()
-
-        self.cur.execute(query)
-        return self.cur.fetchall()
-    
-    def update_query(self, query):
-        if self.conn is None:
-            return
-        
-        if self.cur is None:
-            self.cur = self.conn.cursor()
-
-        self.cur.execute(query)
-        self.conn.commit()
-        
-        
-    
-        
-
-
-        
-
-    
+    def close_all(self):
+        self.pool.closeall()
