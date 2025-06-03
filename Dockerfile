@@ -33,9 +33,17 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY . .
 
+# Health check para el load balancer
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
 # Run as non-root user
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser
 
-# Start the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Configuración optimizada para múltiples instancias
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \  # Aprovecha múltiples cores CPU
+     "--timeout-keep-alive", "60"]  # Mantiene conexiones más tiempo

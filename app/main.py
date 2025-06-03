@@ -21,6 +21,10 @@ app.include_router(ai.router, prefix="/ai", tags=["ai"])
 def read_root():
     return "Aplicación de Iker, Luis, Carlos, Ferza"
 
+@app.get("/health")
+def health_check():
+    return{"status": "healthy", "service": "FastAPI" }
+
 
 
 
