@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.utils import getDb, auth
 from app.db import DB
 from datetime import timedelta
+from fastapi import HTTPException
 
 from app.models.user import *
 
@@ -16,34 +17,36 @@ def root(db: DB = Depends(getDb.get_db)):
 @router.post("/login")
 def login(data: UserLogin, db: DB = Depends(getDb.get_db)):
     try:
-        # Fetch user - results are tuples
         result = db.execute_query(
             "SELECT id, username, password FROM users WHERE username = %s", 
             (data.username,), 
             fetch=True
         )
-        
+
         if not result:
+            auth.log_db(db, 0, "/users/login", "POST")  
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials"
             )
 
         user = result[0]
-        hashed_password = user[2]  # password is index 2
+        hashed_password = user[2]
 
         if not auth.verify_password(data.password, hashed_password):
+            auth.log_db(db, user[0], "/users/login", "POST")  
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials"
             )
-        
-        # Create JWT token
+
         access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = auth.create_access_token(
-            data={"sub": user[1]},  # user[1] is username
+            data={"sub": user[1]},
             expires_delta=access_token_expires
         )
+
+        auth.log_db(db, user[0], "/users/login", "POST")  
 
         return {
             "access_token": access_token,
@@ -60,22 +63,50 @@ def login(data: UserLogin, db: DB = Depends(getDb.get_db)):
     
 @router.post("/register")
 def register(data: CreateUser, db: DB = Depends(getDb.get_db)):
-    hashed_password = auth.get_password_hash(data.password)
+    try:
+        hashed_password = auth.get_password_hash(data.password)
 
-    query = """
-    INSERT INTO users (username, first_name, last_name, email, password)
-    VALUES (%s, %s, %s, %s, %s)
-    RETURNING id, username, first_name, last_name, email, created_at
-    """
-    
-    params = (
-        data.username,
-        data.firstName,
-        data.lastName,
-        data.email,
-        hashed_password
-    )
-    return db.execute_query(query, params, fetch=True)[0]
+        query = """
+        INSERT INTO users (username, password)
+        VALUES (%s, %s)
+        RETURNING username
+        """
+        
+        params = (
+            data.username,
+            hashed_password
+        )
+        return db.execute_query(query, params, fetch=True)[0]
+
+    except Exception as e:
+        print("Error real:", str(e)) 
+        raise HTTPException(status_code=500, detail=f"Error al registrar: {e}")
+
+#Ver Logs
+@router.get("/logs")
+def obtener_logs(db: DB = Depends(getDb.get_db)):
+    try:
+        query = "SELECT id, user_id, endpoint, method, timestamp FROM logs ORDER BY timestamp DESC"
+        resultados = db.execute_query(query, fetch=True)
+
+        logs = []
+        for fila in resultados:
+            logs.append({
+                "id": fila[0],
+                "user_id": fila[1],
+                "endpoint": fila[2],
+                "method": fila[3],
+                "timestamp": fila[4].strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        return {"logs": logs}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener logs: {str(e)}"
+        )
+
 
 
 
