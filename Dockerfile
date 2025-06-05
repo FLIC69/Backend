@@ -33,9 +33,5 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY . .
 
-# Run as non-root user
-RUN useradd -m appuser && chown -R appuser /app
-USER appuser
-
 # Configuración optimizada para múltiples instancias
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", "--ssl-keyfile", "~/certs/selfsigned.key", "--ssl-certfile", "~/certs/selfsigned.crt"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", "--ssl-keyfile", "/certs/selfsigned.key", "--ssl-certfile", "/certs/selfsigned.crt"]
