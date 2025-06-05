@@ -38,7 +38,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def get_current_user(request: Request):
-    token = request.cookies.get("token")
+    token = request.cookies.get("access_token")
     SECRET_KEY = os.getenv("JWT_TOKEN")
 
     if SECRET_KEY is None:
