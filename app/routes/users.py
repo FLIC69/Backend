@@ -54,7 +54,7 @@ def login(data: UserLogin, response: Response, db: DB = Depends(getDb.get_db)):
             value=access_token,
             httponly=True,
             secure=True,  # Change to True if you're using HTTPS
-            samesite="lax",  # Or "strict", or "none" if using cross-site
+            samesite="none",  # Or "strict", or "none" if using cross-site
             max_age=access_token_expires.total_seconds(),
             path="/"
         )
