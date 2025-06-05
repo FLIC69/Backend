@@ -18,7 +18,7 @@ def root(db: DB = Depends(getDb.get_db)):
 def login(data: UserLogin, response: Response, db: DB = Depends(getDb.get_db)):
     try:
         result = db.execute_query(
-            "SELECT COUNT FROM users WHERE username = %s", 
+            "SELECT id, username, password FROM users WHERE username = %s", 
             (data.username,), 
             fetch=True
         )
