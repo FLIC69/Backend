@@ -4,3 +4,5 @@ uvicorn
 psycopg2
 passlib
 python-jose[cryptography]
+python-jose
+requests

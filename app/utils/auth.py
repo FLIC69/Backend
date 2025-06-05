@@ -5,7 +5,6 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 from typing import Optional
 import os
-from sqlalchemy import text
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -54,25 +53,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     # Here you would typically fetch user from DB
     # For now we'll just return the username
     return {"username": username}
-
-def get_user_by_username(username: str, db) -> dict | None:
-    try:
-        query = text("SELECT * FROM usuarios WHERE username = :username")
-        result = db.fetch_one(query, {"username": username})
-        return result
-    except Exception as e:
-        print("Error al consultar el usuario:", e)
-        return None
     
-
 def log_db(db, user_id: int, endpoint: str, method: str):
     print("Guardando log en la base de datos...")
     try:
-        query = text("""
+        query = """
             INSERT INTO logs (user_id, endpoint, method)
             VALUES (%s, %s, %s)
-        """)
-        db.execute(query, (user_id, endpoint, method))
+        """
+        db.execute_query(query, (user_id, endpoint, method))
     except Exception as e:
         print("Error al guardar log:", e)
 

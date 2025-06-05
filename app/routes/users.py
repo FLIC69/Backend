@@ -82,31 +82,6 @@ def register(data: CreateUser, db: DB = Depends(getDb.get_db)):
         print("Error real:", str(e)) 
         raise HTTPException(status_code=500, detail=f"Error al registrar: {e}")
 
-#Ver Logs
-@router.get("/logs")
-def obtener_logs(db: DB = Depends(getDb.get_db)):
-    try:
-        query = "SELECT id, user_id, endpoint, method, timestamp FROM logs ORDER BY timestamp DESC"
-        resultados = db.execute_query(query, fetch=True)
-
-        logs = []
-        for fila in resultados:
-            logs.append({
-                "id": fila[0],
-                "user_id": fila[1],
-                "endpoint": fila[2],
-                "method": fila[3],
-                "timestamp": fila[4].strftime("%Y-%m-%d %H:%M:%S")
-            })
-
-        return {"logs": logs}
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener logs: {str(e)}"
-        )
-
 
 
 
