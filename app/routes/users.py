@@ -18,7 +18,7 @@ def root(db: DB = Depends(getDb.get_db)):
 def login(data: UserLogin, response: Response, db: DB = Depends(getDb.get_db)):
     try:
         result = db.execute_query(
-            "SELECT id, username, password FROM users WHERE username = %s", 
+            "SELECT COUNT FROM users WHERE username = %s", 
             (data.username,), 
             fetch=True
         )
@@ -75,6 +75,19 @@ def login(data: UserLogin, response: Response, db: DB = Depends(getDb.get_db)):
 @router.post("/register")
 def register(data: CreateUser, db: DB = Depends(getDb.get_db)):
     try:
+        result = db.execute_query(
+            "SELECT COUNT(*) FROM users WHERE username = %s", 
+            (data.username,), 
+            fetch=True
+        )
+
+        if result[0][0] > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already exists"
+            )
+
+
         hashed_password = auth.get_password_hash(data.password)
 
         query = """

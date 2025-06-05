@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from typing import Optional
+from fastapi.responses import JSONResponse
 import os
 
 from dotenv import load_dotenv
@@ -36,23 +37,33 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def get_current_user(request: Request):
+    token = request.cookies.get("token")
+    SECRET_KEY = os.getenv("JWT_TOKEN")
+
+    if SECRET_KEY is None:
+        raise RuntimeError("JWT_TOKEN not found in environment")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No JWT found",
+        )
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        request.state.user = payload.get("sub")
+        return payload.get("sub")  # Optional: return user ID or claims
     except JWTError:
-        raise credentials_exception
-    
-    # Here you would typically fetch user from DB
-    # For now we'll just return the username
-    return {"username": username}
+        response = JSONResponse(
+            content={"detail": "Invalid or expired token"},
+            status_code=401
+        )
+        response.delete_cookie("token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        )
     
 def log_db(db, user_id: int, endpoint: str, method: str):
     print("Guardando log en la base de datos...")
