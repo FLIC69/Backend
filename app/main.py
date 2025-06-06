@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.db import DB
-from app.routes import users, ai
+from app.routes import users, ai, log
 
 
 from dotenv import load_dotenv
@@ -20,8 +20,9 @@ app.add_middleware(
     CORSMiddleware,
         allow_origins=[
         "http://localhost:5173",
-        "https://172.28.69.248"
-    ],  # or specific domains
+        "https://172.28.69.248",
+        "https://172.28.69.210"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +30,8 @@ app.add_middleware(
 
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
+app.include_router(log.router, prefix="/log", tags=["logs"])
+
 
 @app.get("/")
 def read_root():
