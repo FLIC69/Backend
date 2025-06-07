@@ -76,4 +76,23 @@ def log_db(db, user_id: int, endpoint: str, method: str):
     except Exception as e:
         print("Error al guardar log:", e)
 
+async def verify_token(request: Request) -> dict:
+    # Extract token from cookies
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing access token"
+        )
+    
+    try:
+        # Verify and decode the JWT
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from app.utils import getDb, auth
 from app.db import DB
 from datetime import timedelta
@@ -105,6 +105,32 @@ def register(data: CreateUser, db: DB = Depends(getDb.get_db)):
     except Exception as e:
         print("Error real:", str(e)) 
         raise HTTPException(status_code=500, detail=f"Error al registrar: {e}")
+    
+@router.get("/me")
+def check_token(payload: dict = Depends(auth.verify_token)):
+    # If execution reaches here, the token is valid
+    return {
+        "status": "authenticated",
+        "user_id": payload.get("sub"),  # or whatever claim you use for user ID
+    }
+
+@router.get("/logout")
+def logout():
+    response = Response(
+        content="Logged out successfully",
+        status_code=status.HTTP_200_OK
+    )
+
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        domain=None,
+        secure=True,
+        httponly=True,
+        samesite="none"
+    )
+    
+    return response
 
 
 
